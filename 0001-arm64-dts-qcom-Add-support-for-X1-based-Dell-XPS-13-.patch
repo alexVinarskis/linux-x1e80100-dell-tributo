@@ -1,7 +1,8 @@
-From d9e84ac697053eaf41b7262944f17c6ad4df63d4 Mon Sep 17 00:00:00 2001
+From 9a97e46ffc5ede3799c5de8274aa53ce7fc19a20 Mon Sep 17 00:00:00 2001
 From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
 Date: Wed, 14 Aug 2024 22:40:13 +0200
-Subject: [PATCH] arm64: dts: qcom: Add support for X1-based Dell XPS 13 9345
+Subject: [PATCH 1/2] arm64: dts: qcom: Add support for X1-based Dell XPS 13
+ 9345
 
 Initial support for Dell XPS 9345 13" 2024 (Tributo) based on X1E80100.
 
@@ -30,12 +31,12 @@ Should be working, but cannot be tested due to lack of hw:
 * Touchscreen
 ---
  arch/arm64/boot/dts/qcom/Makefile             |   1 +
- .../dts/qcom/x1e80100-dell-tributo-13.dts     | 852 ++++++++++++++++++
- 2 files changed, 853 insertions(+)
+ .../dts/qcom/x1e80100-dell-tributo-13.dts     | 850 ++++++++++++++++++
+ 2 files changed, 851 insertions(+)
  create mode 100644 arch/arm64/boot/dts/qcom/x1e80100-dell-tributo-13.dts
 
 diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
-index 0e5c810304fb..a78ebf03851f 100644
+index 0e5c81030..a78ebf038 100644
 --- a/arch/arm64/boot/dts/qcom/Makefile
 +++ b/arch/arm64/boot/dts/qcom/Makefile
 @@ -262,6 +262,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-hdk.dtb
@@ -48,10 +49,10 @@ index 0e5c810304fb..a78ebf03851f 100644
  dtb-$(CONFIG_ARCH_QCOM)	+= x1e80100-qcp.dtb
 diff --git a/arch/arm64/boot/dts/qcom/x1e80100-dell-tributo-13.dts b/arch/arm64/boot/dts/qcom/x1e80100-dell-tributo-13.dts
 new file mode 100644
-index 000000000000..348512a0e0f8
+index 000000000..e5bcc5db6
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/x1e80100-dell-tributo-13.dts
-@@ -0,0 +1,852 @@
+@@ -0,0 +1,850 @@
 +// SPDX-License-Identifier: BSD-3-Clause
 +/*
 + * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
@@ -105,15 +106,6 @@ index 000000000000..348512a0e0f8
 +			/* Reuse as a panic indicator until we get a "camera on" trigger */
 +			panic-indicator;
 +		};
-+	};
-+
-+	backlight: backlight {
-+		compatible = "pwm-backlight";
-+		pwms = <&pmk8550_pwm 0 4000000>;
-+		enable-gpios = <&pmc8380_3_gpios 4 GPIO_ACTIVE_HIGH>;
-+
-+		pinctrl-0 = <&edp_bl_en>, <&edp_bl_pwm>;
-+		pinctrl-names = "default";
 +	};
 +
 +    pmic-glink {
@@ -522,11 +514,17 @@ index 000000000000..348512a0e0f8
 +};
 +
 +&pcie4 {
++	perst-gpios = <&tlmm 146 GPIO_ACTIVE_LOW>;
++	wake-gpios = <&tlmm 148 GPIO_ACTIVE_LOW>;
++
++	pinctrl-0 = <&pcie4_default>;
++	pinctrl-names = "default";
++
 +	status = "okay";
 +};
 +
 +&pcie4_phy {
-+	vdda-phy-supply = <&vreg_l3j_0p8>;
++	vdda-phy-supply = <&vreg_l3i_0p8>;
 +	vdda-pll-supply = <&vreg_l3e_1p2>;
 +
 +	status = "okay";
@@ -549,27 +547,6 @@ index 000000000000..348512a0e0f8
 +	vdda-pll-supply = <&vreg_l2j_1p2>;
 +
 +	status = "okay";
-+};
-+
-+&pmc8380_3_gpios {
-+	edp_bl_en: edp-bl-en-state {
-+		pins = "gpio4";
-+		function = "normal";
-+		power-source = <1>; /* 1.8V */
-+		input-disable;
-+		output-enable;
-+	};
-+};
-+
-+&pmk8550_pwm {
-+	status = "okay";
-+};
-+
-+&pmk8550_gpios {
-+	edp_bl_pwm: edp-bl-pwm-state {
-+		pins = "gpio5";
-+		function = "func3";
-+	};
 +};
 +
 +&qupv3_0 {
@@ -617,7 +594,6 @@ index 000000000000..348512a0e0f8
 +		panel {
 +			/* 1920x1200 IPS panel is SHP1593, PNP09FF compatible */
 +			compatible = "edp-panel";
-+			backlight = <&backlight>;
 +			power-supply = <&vreg_edp_3p3>;
 +
 +			port {
@@ -707,9 +683,9 @@ index 000000000000..348512a0e0f8
 +
 +	status = "okay";
 +
-+	touchscreen@0 {
++	touchscreen@1 {
 +		compatible = "hid-over-i2c";
-+		reg = <0x00>;
++		reg = <0x1>;
 +
 +		hid-descr-addr = <0x1>;
 +		interrupts-extended = <&tlmm 51 IRQ_TYPE_LEVEL_LOW>;
@@ -806,6 +782,29 @@ index 000000000000..348512a0e0f8
 +		bias-disable;
 +	};
 +
++	pcie4_default: pcie4-default-state {
++		clkreq-n-pins {
++			pins = "gpio147";
++			function = "pcie4_clk";
++			drive-strength = <2>;
++			bias-pull-up;
++		};
++
++		perst-n-pins {
++			pins = "gpio146";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-disable;
++		};
++
++		wake-n-pins {
++			pins = "gpio148";
++			function = "gpio";
++			drive-strength = <2>;
++			bias-pull-up;
++		};
++	};
++
 +    pcie6a_default: pcie6a-default-state {
 +		clkreq-n-pins {
 +			pins = "gpio153";
@@ -818,7 +817,7 @@ index 000000000000..348512a0e0f8
 +			pins = "gpio152";
 +			function = "gpio";
 +			drive-strength = <2>;
-+			bias-pull-down;
++			bias-disable;
 +		};
 +
 +		wake-n-pins {
