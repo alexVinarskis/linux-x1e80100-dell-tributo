@@ -1,29 +1,27 @@
-From 9a97e46ffc5ede3799c5de8274aa53ce7fc19a20 Mon Sep 17 00:00:00 2001
+From 9d1daf09b0ceddb5f536e4e1231b62fab8b31bd3 Mon Sep 17 00:00:00 2001
 From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
 Date: Wed, 14 Aug 2024 22:40:13 +0200
-Subject: [PATCH 1/2] arm64: dts: qcom: Add support for X1-based Dell XPS 13
- 9345
+Subject: [PATCH] arm64: dts: qcom: Add support for X1-based Dell XPS 13 9345
 
 Initial support for Dell XPS 9345 13" 2024 (Tributo) based on X1E80100.
 
-Currently in WIP, boots to initramfs, however still throws error, depending
-on initramfs may end just in black screen (own one) or enters debian setup
-screen (Linaro's sample for X1E80100) with (at very least) no keyboard or
-USB functioning.
-
-**Should** be working:
-* Lid switch
-* eDP with backlight control
-* WiFi
+Working:
+* Touchpad
+* Keyboard (requires i2c-hid patch)
+* eDP
 * NVME
-* GPU/aDSP/cDSP
-* USB Cs in 2.0/3.0/DP modes
+* USB Type-C ports in USB2/USB3
+* (TO TEST) Lid switch
+* (TO TEST) WiFi
+* (TO TEST) GPU/aDSP/cDSP
 
 Not working:
-* Speakers (TODO, pin guessing)
-* Microphones (TODO, pin guessing)
-* Fingerprint Reader (TODO, USB MP)
-* Camera indicator (?)
+* Power button (TODO)
+* PWM backlight control (WIP, seems similar to Romulus)
+* Speakers (WIP, pin guessing)
+* Microphones (WIP, pin guessing)
+* Fingerprint Reader (WIP, USB MP)
+* USB as DP/USB3 (Pending retimer driver)
 * Camera
 
 Should be working, but cannot be tested due to lack of hw:
@@ -31,12 +29,12 @@ Should be working, but cannot be tested due to lack of hw:
 * Touchscreen
 ---
  arch/arm64/boot/dts/qcom/Makefile             |   1 +
- .../dts/qcom/x1e80100-dell-tributo-13.dts     | 850 ++++++++++++++++++
- 2 files changed, 851 insertions(+)
+ .../dts/qcom/x1e80100-dell-tributo-13.dts     | 854 ++++++++++++++++++
+ 2 files changed, 855 insertions(+)
  create mode 100644 arch/arm64/boot/dts/qcom/x1e80100-dell-tributo-13.dts
 
 diff --git a/arch/arm64/boot/dts/qcom/Makefile b/arch/arm64/boot/dts/qcom/Makefile
-index 0e5c81030..a78ebf038 100644
+index 0e5c810304fb..a78ebf03851f 100644
 --- a/arch/arm64/boot/dts/qcom/Makefile
 +++ b/arch/arm64/boot/dts/qcom/Makefile
 @@ -262,6 +262,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= sm8650-hdk.dtb
@@ -49,10 +47,10 @@ index 0e5c81030..a78ebf038 100644
  dtb-$(CONFIG_ARCH_QCOM)	+= x1e80100-qcp.dtb
 diff --git a/arch/arm64/boot/dts/qcom/x1e80100-dell-tributo-13.dts b/arch/arm64/boot/dts/qcom/x1e80100-dell-tributo-13.dts
 new file mode 100644
-index 000000000..e5bcc5db6
+index 000000000000..288d8f40a16d
 --- /dev/null
 +++ b/arch/arm64/boot/dts/qcom/x1e80100-dell-tributo-13.dts
-@@ -0,0 +1,850 @@
+@@ -0,0 +1,854 @@
 +// SPDX-License-Identifier: BSD-3-Clause
 +/*
 + * Copyright (c) 2024 Qualcomm Innovation Center, Inc. All rights reserved.
@@ -557,6 +555,10 @@ index 000000000..e5bcc5db6
 +	status = "okay";
 +};
 +
++&qupv3_2 {
++	status = "okay";
++};
++
 +&remoteproc_adsp {
 +	firmware-name = "qcom/x1e80100/dell/tributo/qcadsp8380.mbn",
 +			        "qcom/x1e80100/dell/tributo/adsp_dtbs.elf";
@@ -575,7 +577,7 @@ index 000000000..e5bcc5db6
 +	status = "okay";
 +
 +	zap-shader {
-+    	memory-region = <&gpu_microcode_mem>;
++		memory-region = <&gpu_microcode_mem>;
 +		firmware-name = "qcom/x1e80100/dell/tributo/qcdxkmsuc8380.mbn";
 +	};
 +};
@@ -633,7 +635,7 @@ index 000000000..e5bcc5db6
 +		compatible = "hid-over-i2c";
 +		reg = <0x5>;
 +
-+		hid-descr-addr = <0x1>;
++		hid-descr-addr = <0x20>;
 +		interrupts-extended = <&tlmm 67 IRQ_TYPE_LEVEL_LOW>;
 +
 +		pinctrl-0 = <&kybd_default>;
@@ -659,22 +661,8 @@ index 000000000..e5bcc5db6
 +};
 +
 +&i2c7 {
-+	clock-frequency = <400000>;
-+	status = "okay";
-+
-+	touchpad@2c {
-+		compatible = "hid-over-i2c";
-+		reg = <0x2c>;
-+
-+		hid-descr-addr = <0x20>;
-+		interrupts-extended = <&tlmm 3 IRQ_TYPE_LEVEL_LOW>;
-+
-+		pinctrl-0 = <&tpad_default>;
-+		pinctrl-names = "default";
-+
-+		wakeup-source;
-+	};
-+
++    clock-frequency = <400000>;
++    status = "disabled";
 +    /* PS8830 USB4 Retimer @ 0x8 */
 +};
 +
@@ -695,6 +683,24 @@ index 000000000..e5bcc5db6
 +	};
 +};
 +
++&i2c17 {
++	clock-frequency = <400000>;
++	status = "okay";
++
++	touchpad@2c {
++		compatible = "hid-over-i2c";
++		reg = <0x2c>;
++
++		hid-descr-addr = <0x20>;
++		interrupts-extended = <&tlmm 3 IRQ_TYPE_LEVEL_LOW>;
++
++		pinctrl-0 = <&tpad_default>;
++		pinctrl-names = "default";
++
++		wakeup-source;
++	};
++};
++
 +&smb2360_0_eusb2_repeater {
 +	vdd18-supply = <&vreg_l3d_1p8>;
 +	vdd3-supply = <&vreg_l2b_3p0>;
@@ -706,8 +712,7 @@ index 000000000..e5bcc5db6
 +};
 +
 +&tlmm {
-+	gpio-reserved-ranges = <34 2>, /* Unused */
-+						   <76 4>, /* SPI19 (otherwise TrustZone violation) */
++	gpio-reserved-ranges = <76 4>, /* SPI19 (otherwise TrustZone violation) */
 +						   <44 4>, /* SPI11 (TPM) */
 +						   <238 1>; /* UFS Reset */
 +
@@ -733,8 +738,7 @@ index 000000000..e5bcc5db6
 +
 +    tpad_default: tpad-default-state {
 +		disable-pins {
-+			/* TODO swap with reset ? */
-+			pins = "gpio52";
++			pins = "gpio38";
 +			function = "gpio";
 +			output-high;
 +		};
@@ -746,11 +750,9 @@ index 000000000..e5bcc5db6
 +		};
 +
 +		reset-n-pins {
-+            /* TODO swap with disable ? */
-+			pins = "gpio38";
++			pins = "gpio52";
 +			function = "gpio";
-+			output-high;
-+			drive-strength = <2>;
++			bias-disable;
 +		};
 +	};
 +
