@@ -1,0 +1,44 @@
+From 2b2411e9775074fd69dda5d6bb703dd3a305c93a Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Wed, 25 Sep 2024 12:01:59 +0200
+Subject: [PATCH 4/6] HID: i2c-hid: introduce re-power-on quirk
+
+It appears some keyboards from vendor 'QTEC' will not work properly until
+suspend & resume.
+
+Empirically narrowed down to solution of re-sending power on command
+_after_ initialization was completed before the end of initial probing.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ drivers/hid/i2c-hid/i2c-hid-core.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/hid/i2c-hid/i2c-hid-core.c b/drivers/hid/i2c-hid/i2c-hid-core.c
+index 43664a24176f..ad386ae878ef 100644
+--- a/drivers/hid/i2c-hid/i2c-hid-core.c
++++ b/drivers/hid/i2c-hid/i2c-hid-core.c
+@@ -51,6 +51,7 @@
+ #define I2C_HID_QUIRK_NO_WAKEUP_AFTER_RESET	BIT(4)
+ #define I2C_HID_QUIRK_NO_SLEEP_ON_SUSPEND	BIT(5)
+ #define I2C_HID_QUIRK_DELAY_WAKEUP_AFTER_RESUME BIT(6)
++#define I2C_HID_QUIRK_RE_POWER_ON		BIT(7)
+ 
+ /* Command opcodes */
+ #define I2C_HID_OPCODE_RESET			0x01
+@@ -1069,7 +1070,11 @@ static int i2c_hid_core_register_hid(struct i2c_hid *ihid)
+ 		return ret;
+ 	}
+ 
+-	return 0;
++	/* At least some QTEC devices need this after initialization */
++	if (ihid->quirks & I2C_HID_QUIRK_RE_POWER_ON)
++		ret = i2c_hid_set_power(ihid, I2C_HID_PWR_ON);
++
++	return ret;
+ }
+ 
+ static int i2c_hid_core_probe_panel_follower(struct i2c_hid *ihid)
+-- 
+2.45.2
+

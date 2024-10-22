@@ -1,0 +1,77 @@
+From f39c8bdb9f9f73bcf8dffefc55ffe8d957950949 Mon Sep 17 00:00:00 2001
+From: Abel Vesa <abel.vesa@linaro.org>
+Date: Tue, 21 May 2024 09:11:57 +0300
+Subject: [PATCH 1/6] arm64: dts: qcom: x1e80100: Add node uart14
+
+Add node uart14 for x1e80100.
+
+Co-developed-by: Zijun Hu <quic_zijuhu@quicinc.com>
+Signed-off-by: Zijun Hu <quic_zijuhu@quicinc.com>
+Signed-off-by: Abel Vesa <abel.vesa@linaro.org>
+---
+ arch/arm64/boot/dts/qcom/x1e80100.dtsi | 42 ++++++++++++++++++++++++++
+ 1 file changed, 42 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/x1e80100.dtsi b/arch/arm64/boot/dts/qcom/x1e80100.dtsi
+index 2ccbdb06418b..3c3a2719651e 100644
+--- a/arch/arm64/boot/dts/qcom/x1e80100.dtsi
++++ b/arch/arm64/boot/dts/qcom/x1e80100.dtsi
+@@ -1883,6 +1883,28 @@ &config_noc SLAVE_QUP_1 QCOM_ICC_TAG_ALWAYS>,
+ 				status = "disabled";
+ 			};
+ 
++			uart14: serial@a98000 {
++				compatible = "qcom,geni-uart";
++				reg = <0 0x00a98000 0 0x4000>;
++
++				interrupts = <GIC_SPI 806 IRQ_TYPE_LEVEL_HIGH>;
++
++				clocks = <&gcc GCC_QUPV3_WRAP1_S6_CLK>;
++				clock-names = "se";
++
++				pinctrl-names = "default";
++				pinctrl-0 = <&qup_uart14_cts>, <&qup_uart14_rts>, <&qup_uart14_tx>, <&qup_uart14_rx>;
++
++				power-domains = <&rpmhpd 0>;
++				interconnects = <&clk_virt MASTER_QUP_CORE_1 QCOM_ICC_TAG_ALWAYS
++						 &clk_virt SLAVE_QUP_CORE_1 QCOM_ICC_TAG_ALWAYS>,
++						<&gem_noc MASTER_APPSS_PROC QCOM_ICC_TAG_ALWAYS
++						 &config_noc SLAVE_QUP_1 QCOM_ICC_TAG_ALWAYS>;
++				interconnect-names = "qup-core","qup-config";
++
++				status = "disabled";
++			};
++
+ 			i2c15: i2c@a9c000 {
+ 				compatible = "qcom,geni-i2c";
+ 				reg = <0 0x00a9c000 0 0x4000>;
+@@ -5620,6 +5642,26 @@ qup_spi23_data_clk: qup-spi23-data-clk-state {
+ 				bias-disable;
+ 			};
+ 
++			qup_uart14_cts: qup-uart14-cts-state {
++				pins = "gpio56";
++				function = "qup1_se6";
++			};
++
++			qup_uart14_rts: qup-uart14-rts-state {
++				pins = "gpio57";
++				function = "qup1_se6";
++			};
++
++			qup_uart14_tx: qup-uart14-tx-state {
++				pins = "gpio58";
++				function = "qup1_se6";
++			};
++
++			qup_uart14_rx: qup-uart14-rx-state {
++				pins = "gpio59";
++				function = "qup1_se6";
++			};
++
+ 			qup_uart2_default: qup-uart2-default-state {
+ 				cts-pins {
+ 					pins = "gpio8";
+-- 
+2.45.2
+
