@@ -1,7 +1,7 @@
-From 2b2411e9775074fd69dda5d6bb703dd3a305c93a Mon Sep 17 00:00:00 2001
+From 97b9ae3f38b666eb26dd394f82c6692e6497dc40 Mon Sep 17 00:00:00 2001
 From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
 Date: Wed, 25 Sep 2024 12:01:59 +0200
-Subject: [PATCH 4/6] HID: i2c-hid: introduce re-power-on quirk
+Subject: [PATCH 4/8] HID: i2c-hid: introduce re-power-on quirk
 
 It appears some keyboards from vendor 'QTEC' will not work properly until
 suspend & resume.

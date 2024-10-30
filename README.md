@@ -5,7 +5,7 @@ Easiest way to install is by using Ubuntu's [X1E Dev image](https://discourse.ub
 
 ## Test setup
 Kernel
-* `linux-next`, current patchset tested on `next-20241021`
+* `linux-next`, current patchset tested on `next-20241030`
 * 6.11 tree from Ubuntu's X1E dev image.
 
 Initramfs
@@ -28,7 +28,7 @@ HW configurations tested
 | ----------------------- | -------: | ------------------------------------------------------------------------------------------------------------ |
 | Battery Charging        |     ✅ |                                                                                                              |
 | Battery Info            |     ✅ |                                                                                                              |
-| Bluetooth               |     ✅ | Requires `linux-firmware` as of 20241017 to avoid warnings.                                                  |
+| Bluetooth               |     ✅ | Requires `linux-firmware` as of 20241017 to avoid warnings. Not upstreamed yet.                              |
 | Camera                  | TBD/❌ | Likely ov02c10.                                                                                              |
 | Display                 |     ✅ |                                                                                                              |
 | EC/Embedded Controller  | TBD/❌ | Responsible for Fan speeds, OS-controlled keyboard backlight, special keyboard keys & more.                  |
@@ -40,8 +40,9 @@ HW configurations tested
 | Speakers                | TBD/❌ |                                                                                                              |
 | Suspend                 |     ✅ | Suspends well, lid switch working. Power drop in sleep isn't best, depends on X1E generic support.           |
 | Touchpad                |     ✅ |                                                                                                              |
+| Touchscreen             |     ✅ |                                                                                                              |
 | TPM                     |  QC/❌ | Can't be accessed from userspace directly, TZ protected.                                                     |
-| USB-C 3.0               | WIP/❌ | Only in one orientation. PS8830 Retimer patchset coming soon.                                                |
+| USB-C 3.0               |     ✅ | PS8830 Retimer patchset present here, but not upstreamed yet.                                                |
 | USB-C Booting           |     ✅ |                                                                                                              |
-| USB-C DP Alt Mode       |     ❌ | Requires retimer patch. Depends on QCom's unreleased MSN DP driver fixes.                                    |
+| USB-C DP Alt Mode       |     ❌ | Depends on QCom's unreleased MSN DP driver fixes.                                                            |
 | Wi-Fi                   |     ✅ |                                                                                                              |

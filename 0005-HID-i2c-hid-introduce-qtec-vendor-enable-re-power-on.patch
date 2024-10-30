@@ -1,7 +1,7 @@
-From 520cc9cef34a06de94a61bc3bd1acc3f0ea872ea Mon Sep 17 00:00:00 2001
+From b0dff3056c4b8712dc0655ee9a54549b5e279e6f Mon Sep 17 00:00:00 2001
 From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
 Date: Wed, 25 Sep 2024 12:02:00 +0200
-Subject: [PATCH 5/6] HID: i2c-hid: introduce qtec vendor, enable re-power-on
+Subject: [PATCH 5/8] HID: i2c-hid: introduce qtec vendor, enable re-power-on
  quirk
 
 This solves keyboard not working until suspend&resume issue  on Dell XPS
