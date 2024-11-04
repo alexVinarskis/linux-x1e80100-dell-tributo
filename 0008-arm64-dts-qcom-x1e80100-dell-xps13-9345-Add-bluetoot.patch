@@ -1,8 +1,8 @@
-From 4cf843e7aea772167f7e955900b95a365f7c6e83 Mon Sep 17 00:00:00 2001
+From b63eacb4bdc88daac8ef51e73e92e1f128ed9ecd Mon Sep 17 00:00:00 2001
 From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
 Date: Sat, 28 Sep 2024 08:56:33 +0200
-Subject: [PATCH 8/8] arm64: dts: qcom: x1e80100-dell-xps13-9345: Add bluetooth
- nodes
+Subject: [PATCH 08/10] arm64: dts: qcom: x1e80100-dell-xps13-9345: Add
+ bluetooth nodes
 
 Enable bluetooth. Setup turned out to be identical to x1e80100-crd.
 No regulators added, as due to lack of access to schematics that would
@@ -60,5 +60,5 @@ index 2bfbcd12e1c2..6f417d296dd2 100644
  	compatible = "qcom,geni-debug-uart";
  	status = "okay";
 -- 
-2.45.2
+2.43.0
 

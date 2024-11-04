@@ -1,7 +1,7 @@
-From b0dff3056c4b8712dc0655ee9a54549b5e279e6f Mon Sep 17 00:00:00 2001
+From 5c2eeaf58bb1643f682e6edc1d6583a5daeb6825 Mon Sep 17 00:00:00 2001
 From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
 Date: Wed, 25 Sep 2024 12:02:00 +0200
-Subject: [PATCH 5/8] HID: i2c-hid: introduce qtec vendor, enable re-power-on
+Subject: [PATCH 05/10] HID: i2c-hid: introduce qtec vendor, enable re-power-on
  quirk
 
 This solves keyboard not working until suspend&resume issue  on Dell XPS
@@ -43,5 +43,5 @@ index ad386ae878ef..29c75e390a7d 100644
  	 * Sending the wakeup after reset actually break ELAN touchscreen controller
  	 */
 -- 
-2.45.2
+2.43.0
 

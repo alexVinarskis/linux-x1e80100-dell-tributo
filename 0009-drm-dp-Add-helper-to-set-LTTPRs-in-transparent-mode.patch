@@ -1,0 +1,65 @@
+From fd5805a1a58e24eaef8660dd752bfe1edf533951 Mon Sep 17 00:00:00 2001
+From: Abel Vesa <abel.vesa@linaro.org>
+Date: Thu, 31 Oct 2024 17:12:45 +0200
+Subject: [PATCH 09/10] drm/dp: Add helper to set LTTPRs in transparent mode
+
+According to the DisplayPort standard, LTTPRs have two operating
+modes:
+ - non-transparent - it replies to DPCD LTTPR field specific AUX
+   requests, while passes through all other AUX requests
+ - transparent - it passes through all AUX requests.
+
+Switching between this two modes is done by the DPTX by issuing
+an AUX write to the DPCD PHY_REPEATER_MODE register.
+
+Add a generic helper that allows switching between these modes.
+
+Signed-off-by: Abel Vesa <abel.vesa@linaro.org>
+---
+ drivers/gpu/drm/display/drm_dp_helper.c | 17 +++++++++++++++++
+ include/drm/display/drm_dp_helper.h     |  1 +
+ 2 files changed, 18 insertions(+)
+
+diff --git a/drivers/gpu/drm/display/drm_dp_helper.c b/drivers/gpu/drm/display/drm_dp_helper.c
+index 6ee51003de3c..38d612345986 100644
+--- a/drivers/gpu/drm/display/drm_dp_helper.c
++++ b/drivers/gpu/drm/display/drm_dp_helper.c
+@@ -2694,6 +2694,23 @@ int drm_dp_lttpr_max_link_rate(const u8 caps[DP_LTTPR_COMMON_CAP_SIZE])
+ }
+ EXPORT_SYMBOL(drm_dp_lttpr_max_link_rate);
+ 
++/**
++ * drm_dp_lttpr_set_transparent_mode - set the LTTPR in transparent mode
++ * @aux: DisplayPort AUX channel
++ * @enable: Enable or disable transparent mode
++ *
++ * Returns 0 on success or a negative error code on failure.
++ */
++
++int drm_dp_lttpr_set_transparent_mode(struct drm_dp_aux *aux, bool enable)
++{
++	u8 val = enable ? DP_PHY_REPEATER_MODE_TRANSPARENT :
++			  DP_PHY_REPEATER_MODE_NON_TRANSPARENT;
++
++	return drm_dp_dpcd_writeb(aux, DP_PHY_REPEATER_MODE, val);
++}
++EXPORT_SYMBOL(drm_dp_lttpr_set_transparent_mode);
++
+ /**
+  * drm_dp_lttpr_max_lane_count - get the maximum lane count supported by all LTTPRs
+  * @caps: LTTPR common capabilities
+diff --git a/include/drm/display/drm_dp_helper.h b/include/drm/display/drm_dp_helper.h
+index 279624833ea9..8821ab2d36b0 100644
+--- a/include/drm/display/drm_dp_helper.h
++++ b/include/drm/display/drm_dp_helper.h
+@@ -625,6 +625,7 @@ int drm_dp_read_lttpr_phy_caps(struct drm_dp_aux *aux,
+ 			       u8 caps[DP_LTTPR_PHY_CAP_SIZE]);
+ int drm_dp_lttpr_count(const u8 cap[DP_LTTPR_COMMON_CAP_SIZE]);
+ int drm_dp_lttpr_max_link_rate(const u8 caps[DP_LTTPR_COMMON_CAP_SIZE]);
++int drm_dp_lttpr_set_transparent_mode(struct drm_dp_aux *aux, bool enable);
+ int drm_dp_lttpr_max_lane_count(const u8 caps[DP_LTTPR_COMMON_CAP_SIZE]);
+ bool drm_dp_lttpr_voltage_swing_level_3_supported(const u8 caps[DP_LTTPR_PHY_CAP_SIZE]);
+ bool drm_dp_lttpr_pre_emphasis_level_3_supported(const u8 caps[DP_LTTPR_PHY_CAP_SIZE]);
+-- 
+2.43.0
+

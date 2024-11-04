@@ -1,0 +1,88 @@
+From fd3badfd6822dd9a996c3ad9c3a29ed768f80df9 Mon Sep 17 00:00:00 2001
+From: Abel Vesa <abel.vesa@linaro.org>
+Date: Thu, 31 Oct 2024 17:12:48 +0200
+Subject: [PATCH 10/10] drm/msm/dp: Add support for LTTPR handling
+
+Link Training Tunable PHY Repeaters (LTTPRs) are defined in DisplayPort
+1.4a specification. As the name suggests, these PHY repeaters are
+capable of adjusting their output for link training purposes.
+
+The msm DP driver is currently lacking any handling of LTTPRs.
+This means that if at least one LTTPR is found between DPTX and DPRX,
+the link training would fail if that LTTPR was not already configured
+in transparent mode.
+
+The section 3.6.6.1 from the DisplayPort v2.0 specification mandates
+that before link training with the LTTPR is started, the DPTX may place
+the LTTPR in non-transparent mode by first switching to transparent mode
+and then to non-transparent mode. This operation seems to be needed only
+on first link training and doesn't need to be done again until device is
+unplugged.
+
+It has been observed on a few X Elite-based platforms which have
+such LTTPRs in their board design that the DPTX needs to follow the
+procedure described above in order for the link training to be successful.
+
+So add support for reading the LTTPR DPCD caps to figure out the number
+of such LTTPRs first. Then, for platforms (or Type-C dongles) that have
+at least one such an LTTPR, set its operation mode to transparent mode
+first and then to non-transparent, just like the mentioned section of
+the specification mandates.
+
+Signed-off-by: Abel Vesa <abel.vesa@linaro.org>
+---
+ drivers/gpu/drm/msm/dp/dp_display.c | 25 +++++++++++++++++++++++++
+ 1 file changed, 25 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
+index f01980b0888a..5d3d318d7b87 100644
+--- a/drivers/gpu/drm/msm/dp/dp_display.c
++++ b/drivers/gpu/drm/msm/dp/dp_display.c
+@@ -107,6 +107,8 @@ struct dp_display_private {
+ 	struct dp_event event_list[DP_EVENT_Q_MAX];
+ 	spinlock_t event_lock;
+ 
++	u8 lttpr_caps[DP_LTTPR_COMMON_CAP_SIZE];
++
+ 	bool wide_bus_supported;
+ 
+ 	struct dp_audio *audio;
+@@ -367,12 +369,35 @@ static int dp_display_send_hpd_notification(struct dp_display_private *dp,
+ 	return 0;
+ }
+ 
++static void dp_display_lttpr_init(struct dp_display_private *dp)
++{
++	int lttpr_count;
++
++	if (drm_dp_read_lttpr_common_caps(dp->aux, dp->panel->dpcd,
++					  dp->lttpr_caps))
++		return;
++
++	lttpr_count = drm_dp_lttpr_count(dp->lttpr_caps);
++
++	if (lttpr_count) {
++		drm_dp_lttpr_set_transparent_mode(dp->aux, true);
++
++		if (lttpr_count > 0) {
++			if (drm_dp_lttpr_set_transparent_mode(dp->aux, false) != 1)
++				drm_dp_lttpr_set_transparent_mode(dp->aux, true);
++		}
++	}
++}
++
+ static int dp_display_process_hpd_high(struct dp_display_private *dp)
+ {
+ 	struct drm_connector *connector = dp->dp_display.connector;
+ 	const struct drm_display_info *info = &connector->display_info;
+ 	int rc = 0;
+ 
++	if (!dp->dp_display.is_edp)
++		dp_display_lttpr_init(dp);
++
+ 	rc = dp_panel_read_sink_caps(dp->panel, connector);
+ 	if (rc)
+ 		goto end;
+-- 
+2.43.0
+

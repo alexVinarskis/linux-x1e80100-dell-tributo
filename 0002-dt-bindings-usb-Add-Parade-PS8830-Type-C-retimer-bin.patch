@@ -1,7 +1,7 @@
-From ba4b12f251013737a99b11450dc64defc147b49a Mon Sep 17 00:00:00 2001
+From bae9b1ee38339439e2c16cba4ae3429aab4d54f2 Mon Sep 17 00:00:00 2001
 From: Abel Vesa <abel.vesa@linaro.org>
 Date: Tue, 22 Oct 2024 13:26:54 +0300
-Subject: [PATCH 2/8] dt-bindings: usb: Add Parade PS8830 Type-C retimer
+Subject: [PATCH 02/10] dt-bindings: usb: Add Parade PS8830 Type-C retimer
  bindings
 
 Document bindings for the Parade PS8830 Type-C retimer. This retimer is
@@ -151,5 +151,5 @@ index 000000000000..ee4c69eca606
 +    };
 +...
 -- 
-2.45.2
+2.43.0
 

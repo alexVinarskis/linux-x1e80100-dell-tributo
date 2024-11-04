@@ -1,7 +1,7 @@
-From cae45772aea9e6598ccc707ad00ec3f45bef0840 Mon Sep 17 00:00:00 2001
+From 47660053ae83bcd26e0989aa1c0803797050099d Mon Sep 17 00:00:00 2001
 From: Abel Vesa <abel.vesa@linaro.org>
 Date: Tue, 21 May 2024 09:11:57 +0300
-Subject: [PATCH 1/8] arm64: dts: qcom: x1e80100: Add node uart14
+Subject: [PATCH 01/10] arm64: dts: qcom: x1e80100: Add node uart14
 
 Add node uart14 for x1e80100.
 
@@ -73,5 +73,5 @@ index f70a7e00ed50..a8624a3b6e89 100644
  				cts-pins {
  					pins = "gpio8";
 -- 
-2.45.2
+2.43.0
 

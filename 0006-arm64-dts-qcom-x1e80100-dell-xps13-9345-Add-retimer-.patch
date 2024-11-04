@@ -1,7 +1,7 @@
-From f397d985b58e2c0aa425eea98af3e2f5928d1d19 Mon Sep 17 00:00:00 2001
+From a3b0363a09b76035fb00e13380e8cdee8ab12632 Mon Sep 17 00:00:00 2001
 From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
 Date: Fri, 25 Oct 2024 20:58:14 +0200
-Subject: [PATCH 6/8] arm64: dts: qcom: x1e80100-dell-xps13-9345: Add retimer
+Subject: [PATCH 06/10] arm64: dts: qcom: x1e80100-dell-xps13-9345: Add retimer
  support
 
 The Dell XPS 13" 9345 has only 2 USB Type-C ports, both of them
@@ -384,5 +384,5 @@ index 05624226faf9..b112092fbb9f 100644
 +	remote-endpoint = <&retimer_ss1_ss_in>;
  };
 -- 
-2.45.2
+2.43.0
 
