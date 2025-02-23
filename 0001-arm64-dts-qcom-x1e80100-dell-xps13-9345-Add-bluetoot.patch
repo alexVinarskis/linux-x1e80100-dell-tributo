@@ -1,7 +1,7 @@
-From 4cf843e7aea772167f7e955900b95a365f7c6e83 Mon Sep 17 00:00:00 2001
+From c977f7b92306c7e51d5a59a13bdd462ea2f2409d Mon Sep 17 00:00:00 2001
 From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
 Date: Sat, 28 Sep 2024 08:56:33 +0200
-Subject: [PATCH 8/8] arm64: dts: qcom: x1e80100-dell-xps13-9345: Add bluetooth
+Subject: arm64: dts: qcom: x1e80100-dell-xps13-9345: Add bluetooth
  nodes
 
 Enable bluetooth. Setup turned out to be identical to x1e80100-crd.
@@ -14,7 +14,7 @@ Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
  1 file changed, 21 insertions(+)
 
 diff --git a/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts b/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
-index 2bfbcd12e1c2..6f417d296dd2 100644
+index 05624226faf9..c75f73eb653d 100644
 --- a/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
 +++ b/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
 @@ -22,6 +22,7 @@ / {
@@ -25,7 +25,7 @@ index 2bfbcd12e1c2..6f417d296dd2 100644
  	};
  
  	gpio-keys {
-@@ -936,6 +937,14 @@ &tlmm {
+@@ -675,6 +676,14 @@ &tlmm {
  			       <76 4>,  /* SPI19 (TZ Protected) */
  			       <238 1>; /* UFS Reset */
  
@@ -40,7 +40,7 @@ index 2bfbcd12e1c2..6f417d296dd2 100644
  	cam_indicator_en: cam-indicator-en-state {
  		pins = "gpio110";
  		function = "gpio";
-@@ -1094,6 +1103,18 @@ reset-n-pins {
+@@ -805,6 +814,18 @@ reset-n-pins {
  	};
  };
  

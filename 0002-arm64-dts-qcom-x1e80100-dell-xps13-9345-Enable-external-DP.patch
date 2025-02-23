@@ -1,0 +1,50 @@
+From aeda1277504cfcbc2f8d331fa617f935b512672b Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Wed, 27 Nov 2024 22:51:59 +0100
+Subject: arm64: dts: qcom: x1e80100-dell-xps13-9345: Enable external DP
+ support
+
+Particular laptops comes with two USB Type-C ports, both supporting DP
+alt mode. Enable output on both of them.
+
+Due to support missing in the USB/DisplayPort combo PHY driver,
+the external DisplayPort is limited to 2 lanes.
+
+Derived from:
+arm64: dts: qcom: x1e80100-t14s: Add external DP support
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts b/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
+index a7b497121d4c..46f3b734f320 100644
+--- a/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
++++ b/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
+@@ -848,6 +848,22 @@
+ 	status = "okay";
+ };
+ 
++&mdss_dp0 {
++	status = "okay";
++};
++
++&mdss_dp0_out {
++	data-lanes = <0 1>;
++};
++
++&mdss_dp1 {
++	status = "okay";
++};
++
++&mdss_dp1_out {
++	data-lanes = <0 1>;
++};
++
+ &mdss_dp3 {
+ 	/delete-property/ #sound-dai-cells;
+ 
+-- 
+cgit v1.2.3
+

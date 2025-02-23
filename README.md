@@ -1,12 +1,11 @@
 ### Patches for supporting Dell XPS 9345 13" 2024 (codename `tributo`).
 
 As changes will be merged upstream, redundant patches will be dropped from this repo, to only maitain diff on top of latest `linux-next`.
-Easiest way to install is by using Ubuntu's [X1E Dev image](https://discourse.ubuntu.com/t/ubuntu-24-10-concept-snapdragon-x-elite/48800), which now includes most/all of changes from this repo.
 
 ## Test setup
 Kernel
-* `linux-next`, current patchset tested on `next-20241030`
-* 6.11 tree from Ubuntu's X1E dev image.
+* `linux-next`
+* current patchset tested on `next-20250223`
 
 Initramfs
 * Ubuntu's auto-built from kernel installation
@@ -25,24 +24,23 @@ HW configurations tested
 
 
 | Feature                 | Status | Notes                                                                                                        |
-| ----------------------- | -------: | ------------------------------------------------------------------------------------------------------------ |
+| ----------------------- | -----: | ------------------------------------------------------------------------------------------------------------ |
 | Battery Charging        |     ✅ |                                                                                                              |
 | Battery Info            |     ✅ |                                                                                                              |
-| Bluetooth               |     ✅ | Requires `linux-firmware` as of 20241017 to avoid warnings. Not upstreamed yet.                              |
+| Bluetooth               |     ✅ | Requires `linux-firmware` as of 20241017 to avoid warnings.                                                  |
 | Camera                  | TBD/❌ | Likely ov02c10.                                                                                              |
 | Display                 |     ✅ |                                                                                                              |
-| EC/Embedded Controller  | TBD/❌ | Responsible for Fan speeds, OS-controlled keyboard backlight, special keyboard keys & more.                  |
 | Fingerprint Reader      | WIP/❌ | USB MP1 via PTN3222.                                                                                         |
 | GPU Acceleration        |     ✅ | Requires firmware extraction from Windows.                                                                   |
-| Keyboard                |     ✅ | Special keys (eg. mute MIC) not working. Backlight control works from keyboard, but not yet from Gnome.      |
+| Keyboard                |     ✅ |                                                                                                              |
 | Microphone              | TBD/❌ |                                                                                                              |
 | NVMe                    |     ✅ |                                                                                                              |
 | Speakers                | TBD/❌ |                                                                                                              |
 | Suspend                 |     ✅ | Suspends well, lid switch working. Power drop in sleep isn't best, depends on X1E generic support.           |
 | Touchpad                |     ✅ |                                                                                                              |
-| Touchscreen             |     ✅ |                                                                                                              |
 | TPM                     |  QC/❌ | Can't be accessed from userspace directly, TZ protected.                                                     |
-| USB-C 3.0               |     ✅ | PS8830 Retimer patchset present here, but not upstreamed yet.                                                |
+| USB-C 3.0               |     ✅ |                                                                                                              |
 | USB-C Booting           |     ✅ |                                                                                                              |
-| USB-C DP Alt Mode       |     ❌ | Depends on QCom's unreleased MSN DP driver fixes.                                                            |
+| USB-C DP Alt Mode       |     ✅ |                                                                                                              |
+| USB-C DP over dock      |    WIP | Beta series to enable DP per-segment link training                                                           |
 | Wi-Fi                   |     ✅ |                                                                                                              |
