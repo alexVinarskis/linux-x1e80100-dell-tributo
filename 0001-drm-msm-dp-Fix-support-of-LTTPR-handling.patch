@@ -1,88 +1,88 @@
-From bc12c21d3e054107ae2e391e452346f20038c957 Mon Sep 17 00:00:00 2001
+From 89f474f5ae68cbe2a7969c32d7b00749885c6132 Mon Sep 17 00:00:00 2001
 From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
 Date: Sat, 22 Feb 2025 12:47:18 +0100
-Subject: [PATCH 1/2] drm/msm/dp: Fix support of LTTPR handling
+Subject: [PATCH 1/6] drm/msm/dp: Fix support of LTTPR handling
 
-Keep track of lttpr_count, as it will be needed for
-link training per-segment.
+Take into account LTTPR capabilities when selecting maximum allowed
+link rate, number of data lines. Initialize LTTPR before
+msm_dp_panel_read_sink_caps, as
+a) Link params computation need to take into account LTTPR's caps
+b) It appears DPTX shall (re)read DPRX caps after LTTPR detection
 
-Take into account lttpr's capabilities when selecting
-maximum allowed link rate, number of data lines.
+Return lttpr_count to prepare for per-segment link training.
 
 Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Reviewed-by: Abel Vesa <abel.vesa@linaro.org>
 ---
- drivers/gpu/drm/msm/dp/dp_display.c | 34 ++++++++++++++++++++---------
- drivers/gpu/drm/msm/dp/dp_panel.c   | 30 +++++++++++++++++--------
+ drivers/gpu/drm/msm/dp/dp_display.c | 29 +++++++++++++++++++---------
+ drivers/gpu/drm/msm/dp/dp_panel.c   | 30 ++++++++++++++++++++---------
  drivers/gpu/drm/msm/dp/dp_panel.h   |  2 ++
- 3 files changed, 47 insertions(+), 19 deletions(-)
+ 3 files changed, 43 insertions(+), 18 deletions(-)
 
 diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
-index ad09daa4c8ab..457b19052e5f 100644
+index bbc47d86ae9e..d0c2dc7e6648 100644
 --- a/drivers/gpu/drm/msm/dp/dp_display.c
 +++ b/drivers/gpu/drm/msm/dp/dp_display.c
-@@ -107,7 +107,8 @@ struct msm_dp_display_private {
+@@ -108,6 +108,8 @@ struct msm_dp_display_private {
  	struct msm_dp_event event_list[DP_EVENT_Q_MAX];
  	spinlock_t event_lock;
  
--	u8 lttpr_caps[DP_LTTPR_COMMON_CAP_SIZE];
 +	u8 lttpr_common_caps[DP_LTTPR_COMMON_CAP_SIZE];
-+	u8 lttpr_phy_caps[DP_MAX_LTTPR_COUNT][DP_LTTPR_PHY_CAP_SIZE];
- 
++
  	bool wide_bus_supported;
  
-@@ -369,17 +370,29 @@ static int msm_dp_display_send_hpd_notification(struct msm_dp_display_private *d
+ 	struct msm_dp_audio *audio;
+@@ -367,17 +369,21 @@ static int msm_dp_display_send_hpd_notification(struct msm_dp_display_private *d
  	return 0;
  }
  
 -static void msm_dp_display_lttpr_init(struct msm_dp_display_private *dp)
-+static int msm_dp_display_lttpr_init(struct msm_dp_display_private *dp)
++static int msm_dp_display_lttpr_init(struct msm_dp_display_private *dp, u8 *dpcd)
  {
+-	u8 lttpr_caps[DP_LTTPR_COMMON_CAP_SIZE];
 -	int rc;
-+	int i, rc;
-+	int lttpr_count;
++	int rc, lttpr_count;
  
- 	if (drm_dp_read_lttpr_common_caps(dp->aux, dp->panel->dpcd,
--					  dp->lttpr_caps))
+-	if (drm_dp_read_lttpr_common_caps(dp->aux, dp->panel->dpcd, lttpr_caps))
 -		return;
-+					  dp->lttpr_common_caps))
++	if (drm_dp_read_lttpr_common_caps(dp->aux, dpcd, dp->lttpr_common_caps))
 +		return 0;
  
--	rc = drm_dp_lttpr_init(dp->aux, drm_dp_lttpr_count(dp->lttpr_caps));
+-	rc = drm_dp_lttpr_init(dp->aux, drm_dp_lttpr_count(lttpr_caps));
 -	if (rc)
--		DRM_ERROR("failed to set LTTPRs transparency mode, rc=%d\n", rc);
 +	lttpr_count = drm_dp_lttpr_count(dp->lttpr_common_caps);
-+
 +	rc = drm_dp_lttpr_init(dp->aux, lttpr_count);
 +	if (rc) {
-+		DRM_ERROR("fialed to set LTTPRs to transparency mode, rc=%d\n", rc);
+ 		DRM_ERROR("failed to set LTTPRs transparency mode, rc=%d\n", rc);
 +		return 0;
-+	}
-+
-+	for (i = 0; i < lttpr_count; i++) {
-+		drm_dp_read_lttpr_phy_caps(dp->aux, dp->panel->dpcd, DP_PHY_LTTPR(i), dp->lttpr_phy_caps[DP_PHY_LTTPR(i) - DP_PHY_LTTPR1]);
-+		drm_dp_dump_lttpr_desc(dp->aux, DP_PHY_LTTPR(i));
 +	}
 +
 +	return lttpr_count;
  }
  
  static int msm_dp_display_process_hpd_high(struct msm_dp_display_private *dp)
-@@ -387,10 +400,11 @@ static int msm_dp_display_process_hpd_high(struct msm_dp_display_private *dp)
+@@ -385,12 +391,17 @@ static int msm_dp_display_process_hpd_high(struct msm_dp_display_private *dp)
  	struct drm_connector *connector = dp->msm_dp_display.connector;
  	const struct drm_display_info *info = &connector->display_info;
  	int rc = 0;
-+	int lttpr_count;
- 
--	msm_dp_display_lttpr_init(dp);
-+	lttpr_count = msm_dp_display_lttpr_init(dp);
++	u8 dpcd[DP_RECEIVER_CAP_SIZE];
  
 -	rc = msm_dp_panel_read_sink_caps(dp->panel, connector);
-+	rc = msm_dp_panel_read_sink_caps(dp->panel, dp->lttpr_common_caps, connector);
++	rc = drm_dp_read_dpcd_caps(dp->aux, dpcd);
  	if (rc)
  		goto end;
  
+-	msm_dp_display_lttpr_init(dp);
++	msm_dp_display_lttpr_init(dp, dpcd);
++
++	rc = msm_dp_panel_read_sink_caps(dp->panel, dp->lttpr_common_caps, connector);
++	if (rc)
++		goto end;
+ 
+ 	msm_dp_link_process_request(dp->link);
+ 
 diff --git a/drivers/gpu/drm/msm/dp/dp_panel.c b/drivers/gpu/drm/msm/dp/dp_panel.c
-index 92415bf8aa16..5fe9f85fda2c 100644
+index 92415bf8aa16..f41b4cf7002e 100644
 --- a/drivers/gpu/drm/msm/dp/dp_panel.c
 +++ b/drivers/gpu/drm/msm/dp/dp_panel.c
 @@ -45,9 +45,12 @@ static void msm_dp_panel_read_psr_cap(struct msm_dp_panel_private *panel)
@@ -91,7 +91,7 @@ index 92415bf8aa16..5fe9f85fda2c 100644
  
 -static int msm_dp_panel_read_dpcd(struct msm_dp_panel *msm_dp_panel)
 +static int msm_dp_panel_read_dpcd(struct msm_dp_panel *msm_dp_panel,
-+	const u8 lttpr_common_caps[DP_LTTPR_COMMON_CAP_SIZE])
++				  const u8 lttpr_common_caps[DP_LTTPR_COMMON_CAP_SIZE])
  {
  	int rc;
 +	int max_sink_lanes, max_source_lanes, max_lttpr_lanes;

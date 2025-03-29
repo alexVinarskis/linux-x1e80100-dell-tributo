@@ -5,7 +5,7 @@ As changes will be merged upstream, redundant patches will be dropped from this 
 ## Test setup
 Kernel
 * `linux-next`
-* current patchset tested on `next-20250223`
+* current patchset tested on `next-20250327`
 
 Initramfs
 * Ubuntu's auto-built from kernel installation
@@ -28,9 +28,9 @@ HW configurations tested
 | Battery Charging        |     ✅ |                                                                                                              |
 | Battery Info            |     ✅ |                                                                                                              |
 | Bluetooth               |     ✅ | Requires `linux-firmware` as of 20241017 to avoid warnings.                                                  |
-| Camera                  | TBD/❌ | Likely ov02c10.                                                                                              |
+| Camera                  |     QC | Likely ov02c10. Initial support in Linaro's tree                                                             |
 | Display                 |     ✅ |                                                                                                              |
-| Fingerprint Reader      | WIP/❌ | USB MP1 via PTN3222.                                                                                         |
+| Fingerprint Reader      |     QC | USB MP1 via PTN3222.                                                                                         |
 | GPU Acceleration        |     ✅ | Requires firmware extraction from Windows.                                                                   |
 | Keyboard                |     ✅ |                                                                                                              |
 | Microphone              | TBD/❌ |                                                                                                              |
@@ -42,5 +42,6 @@ HW configurations tested
 | USB-C 3.0               |     ✅ |                                                                                                              |
 | USB-C Booting           |     ✅ |                                                                                                              |
 | USB-C DP Alt Mode       |     ✅ |                                                                                                              |
-| USB-C DP over dock      |    WIP | Beta series to enable DP per-segment link training                                                           |
+| USB-C DP over dock      |     ✅ | Series on the lists, not yet merged                                                                          |
 | Wi-Fi                   |     ✅ |                                                                                                              |
+| EC                      |  QC/❌ | Proprietary controller
