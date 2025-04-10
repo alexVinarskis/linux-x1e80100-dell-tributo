@@ -1,0 +1,30 @@
+From d9368eaf879e0b98d2011ee6a22630ef0093e1fe Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Thu, 10 Apr 2025 21:29:14 +0200
+Subject: [PATCH 2/3] arm64: dts: qcom: x1e80100-dell-xps13-9345: enable MICs
+ LDO
+
+Particular device comes without headset combo jack, hence does not
+feature wcd codec IC. In such cases, DMICs are powered from vreg_l1b.
+Set regulator as always-on to enable microphones.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts b/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
+index 9cdf93c9c312..48c6ff532b42 100644
+--- a/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
++++ b/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
+@@ -464,6 +464,7 @@ vreg_l1b_1p8: ldo1 {
+ 			regulator-min-microvolt = <1800000>;
+ 			regulator-max-microvolt = <1800000>;
+ 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
++			regulator-always-on;
+ 		};
+ 
+ 		vreg_l2b_3p0: ldo2 {
+-- 
+2.45.2
+
