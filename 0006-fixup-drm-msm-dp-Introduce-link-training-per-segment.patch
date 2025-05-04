@@ -1,0 +1,212 @@
+From 2c47fb88a2362003d9c782cb39275faacc803c1b Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sat, 3 May 2025 20:16:02 +0200
+Subject: [PATCH 6/7] fixup: drm/msm/dp: Introduce link training per-segment
+ for LTTPRs
+
+Fetch max VS, PE levels per phy, instead of always assuming level 3
+is supported.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ drivers/gpu/drm/msm/dp/dp_ctrl.c    | 10 +++---
+ drivers/gpu/drm/msm/dp/dp_display.c |  1 -
+ drivers/gpu/drm/msm/dp/dp_link.c    | 53 ++++++++++++++++++++++++-----
+ drivers/gpu/drm/msm/dp/dp_link.h    | 13 +++++--
+ 4 files changed, 62 insertions(+), 15 deletions(-)
+
+diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
+index 35b28c2fcd64..51e79bd13edd 100644
+--- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
++++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
+@@ -1042,6 +1042,8 @@ static int msm_dp_ctrl_update_phy_vx_px(struct msm_dp_ctrl_private *ctrl,
+ 	int ret = 0;
+ 	u8 buf[4];
+ 	u32 max_level_reached = 0;
++	u32 max_voltage_swing_level = link->phy_params.max_v_level;
++	u32 max_pre_emphasis_level = link->phy_params.max_p_level;
+ 	u32 voltage_swing_level = link->phy_params.v_level;
+ 	u32 pre_emphasis_level = link->phy_params.p_level;
+ 
+@@ -1054,14 +1056,14 @@ static int msm_dp_ctrl_update_phy_vx_px(struct msm_dp_ctrl_private *ctrl,
+ 	if (ret)
+ 		return ret;
+ 
+-	if (voltage_swing_level >= DP_TRAIN_LEVEL_MAX) {
++	if (voltage_swing_level >= max_voltage_swing_level) {
+ 		drm_dbg_dp(ctrl->drm_dev,
+ 				"max. voltage swing level reached %d\n",
+ 				voltage_swing_level);
+ 		max_level_reached |= DP_TRAIN_MAX_SWING_REACHED;
+ 	}
+ 
+-	if (pre_emphasis_level >= DP_TRAIN_LEVEL_MAX) {
++	if (pre_emphasis_level >= max_pre_emphasis_level) {
+ 		drm_dbg_dp(ctrl->drm_dev,
+ 				"max. pre-emphasis level reached %d\n",
+ 				pre_emphasis_level);
+@@ -1148,7 +1150,7 @@ static int msm_dp_ctrl_link_train_1(struct msm_dp_ctrl_private *ctrl,
+ 	msm_dp_ctrl_train_pattern_set(ctrl, DP_TRAINING_PATTERN_1 |
+ 		DP_LINK_SCRAMBLING_DISABLE, dp_phy);
+ 
+-	msm_dp_link_reset_phy_params_vx_px(ctrl->link);
++	msm_dp_link_reset_phy_params_vx_px(ctrl->link, dp_phy);
+ 	ret = msm_dp_ctrl_update_phy_vx_px(ctrl, dp_phy);
+ 	if (ret)
+ 		return ret;
+@@ -1168,7 +1170,7 @@ static int msm_dp_ctrl_link_train_1(struct msm_dp_ctrl_private *ctrl,
+ 		}
+ 
+ 		if (ctrl->link->phy_params.v_level >=
+-			DP_TRAIN_LEVEL_MAX) {
++			ctrl->link->phy_params.max_v_level) {
+ 			DRM_ERROR_RATELIMITED("max v_level reached\n");
+ 			return -EAGAIN;
+ 		}
+diff --git a/drivers/gpu/drm/msm/dp/dp_display.c b/drivers/gpu/drm/msm/dp/dp_display.c
+index e61d5348541b..5beccccb5c74 100644
+--- a/drivers/gpu/drm/msm/dp/dp_display.c
++++ b/drivers/gpu/drm/msm/dp/dp_display.c
+@@ -426,7 +426,6 @@ static int msm_dp_display_process_hpd_high(struct msm_dp_display_private *dp)
+ 	 */
+ 	msm_dp_link_psm_config(dp->link, &dp->panel->link_info, false);
+ 
+-	msm_dp_link_reset_phy_params_vx_px(dp->link);
+ 	rc = msm_dp_ctrl_on_link(dp->ctrl);
+ 	if (rc) {
+ 		DRM_ERROR("failed to complete DP link training\n");
+diff --git a/drivers/gpu/drm/msm/dp/dp_link.c b/drivers/gpu/drm/msm/dp/dp_link.c
+index 1a1fbb2d7d4f..d65a01a4cf3c 100644
+--- a/drivers/gpu/drm/msm/dp/dp_link.c
++++ b/drivers/gpu/drm/msm/dp/dp_link.c
+@@ -1103,6 +1103,28 @@ int msm_dp_link_get_colorimetry_config(struct msm_dp_link *msm_dp_link)
+ 	return cc;
+ }
+ 
++int msm_dp_link_get_lttpr_max_pe_level(struct msm_dp_link *msm_dp_link,
++				       enum drm_dp_phy dp_phy)
++{
++	const u8 *phy_caps = msm_dp_link->lttpr_phy_caps[dp_phy - DP_PHY_LTTPR1];
++
++	if (drm_dp_lttpr_pre_emphasis_level_3_supported(phy_caps))
++		return DP_TRAIN_LEVEL_3;
++	else
++		return DP_TRAIN_LEVEL_2;
++}
++
++int msm_dp_link_get_lttpr_max_vs_level(struct msm_dp_link *msm_dp_link,
++				       enum drm_dp_phy dp_phy)
++{
++	const u8 *phy_caps = msm_dp_link->lttpr_phy_caps[dp_phy - DP_PHY_LTTPR1];
++
++	if (drm_dp_lttpr_voltage_swing_level_3_supported(phy_caps))
++		return DP_TRAIN_LEVEL_3;
++	else
++		return DP_TRAIN_LEVEL_2;
++}
++
+ int msm_dp_link_adjust_levels(struct msm_dp_link *msm_dp_link, u8 *link_status)
+ {
+ 	int i;
+@@ -1138,23 +1160,23 @@ int msm_dp_link_adjust_levels(struct msm_dp_link *msm_dp_link, u8 *link_status)
+ 	 * Adjust the voltage swing and pre-emphasis level combination to within
+ 	 * the allowable range.
+ 	 */
+-	if (msm_dp_link->phy_params.v_level > DP_TRAIN_LEVEL_MAX) {
++	if (msm_dp_link->phy_params.v_level > msm_dp_link->phy_params.max_v_level) {
+ 		drm_dbg_dp(link->drm_dev,
+ 			"Requested vSwingLevel=%d, change to %d\n",
+ 			msm_dp_link->phy_params.v_level,
+-			DP_TRAIN_LEVEL_MAX);
+-		msm_dp_link->phy_params.v_level = DP_TRAIN_LEVEL_MAX;
++			msm_dp_link->phy_params.max_v_level);
++		msm_dp_link->phy_params.v_level = msm_dp_link->phy_params.max_v_level;
+ 	}
+ 
+-	if (msm_dp_link->phy_params.p_level > DP_TRAIN_LEVEL_MAX) {
++	if (msm_dp_link->phy_params.p_level > msm_dp_link->phy_params.max_p_level) {
+ 		drm_dbg_dp(link->drm_dev,
+ 			"Requested preEmphasisLevel=%d, change to %d\n",
+ 			msm_dp_link->phy_params.p_level,
+-			DP_TRAIN_LEVEL_MAX);
+-		msm_dp_link->phy_params.p_level = DP_TRAIN_LEVEL_MAX;
++			msm_dp_link->phy_params.max_p_level);
++		msm_dp_link->phy_params.p_level = msm_dp_link->phy_params.max_p_level;
+ 	}
+ 
+-	max_p_level = DP_TRAIN_LEVEL_MAX - msm_dp_link->phy_params.v_level;
++	max_p_level = msm_dp_link->phy_params.max_p_level - msm_dp_link->phy_params.v_level;
+ 	if (msm_dp_link->phy_params.p_level > max_p_level) {
+ 		drm_dbg_dp(link->drm_dev,
+ 			"Requested preEmphasisLevel=%d, change to %d\n",
+@@ -1169,10 +1191,25 @@ int msm_dp_link_adjust_levels(struct msm_dp_link *msm_dp_link, u8 *link_status)
+ 	return 0;
+ }
+ 
+-void msm_dp_link_reset_phy_params_vx_px(struct msm_dp_link *msm_dp_link)
++void msm_dp_link_reset_phy_params_vx_px(struct msm_dp_link *msm_dp_link,
++					enum drm_dp_phy dp_phy)
+ {
+ 	msm_dp_link->phy_params.v_level = 0;
+ 	msm_dp_link->phy_params.p_level = 0;
++
++	/*
++	 * Get max supported voltage swing, pre-emphasis levels from the DPTX_PHY
++	 * (source or LTTPR) upstream from the DPRX_PHY we train.
++	 */
++	if (msm_dp_link->lttpr_count <= 0 || dp_phy == DP_PHY_LTTPR(msm_dp_link->lttpr_count - 1)) {
++		msm_dp_link->phy_params.max_p_level = DP_TRAIN_LEVEL_MAX;
++		msm_dp_link->phy_params.max_v_level = DP_TRAIN_LEVEL_MAX;
++	} else {
++		msm_dp_link->phy_params.max_p_level =
++			msm_dp_link_get_lttpr_max_pe_level(msm_dp_link, dp_phy + 1);
++		msm_dp_link->phy_params.max_v_level =
++			msm_dp_link_get_lttpr_max_vs_level(msm_dp_link, dp_phy + 1);
++	}
+ }
+ 
+ u32 msm_dp_link_get_test_bits_depth(struct msm_dp_link *msm_dp_link, u32 bpp)
+diff --git a/drivers/gpu/drm/msm/dp/dp_link.h b/drivers/gpu/drm/msm/dp/dp_link.h
+index 9e8b0857a4ce..291344ed369d 100644
+--- a/drivers/gpu/drm/msm/dp/dp_link.h
++++ b/drivers/gpu/drm/msm/dp/dp_link.h
+@@ -20,7 +20,9 @@ struct msm_dp_link_info {
+ 	unsigned long capabilities;
+ };
+ 
+-#define DP_TRAIN_LEVEL_MAX	3
++#define DP_TRAIN_LEVEL_2	2
++#define DP_TRAIN_LEVEL_3	3
++#define DP_TRAIN_LEVEL_MAX	DP_TRAIN_LEVEL_3
+ 
+ struct msm_dp_link_test_video {
+ 	u32 test_video_pattern;
+@@ -58,6 +60,8 @@ struct msm_dp_link_phy_params {
+ 	u32 phy_test_pattern_sel;
+ 	u8 v_level;
+ 	u8 p_level;
++	u8 max_v_level;
++	u8 max_p_level;
+ };
+ 
+ struct msm_dp_link {
+@@ -104,10 +108,15 @@ static inline u32 msm_dp_link_bit_depth_to_bpp(u32 tbd)
+ 	}
+ }
+ 
+-void msm_dp_link_reset_phy_params_vx_px(struct msm_dp_link *msm_dp_link);
++void msm_dp_link_reset_phy_params_vx_px(struct msm_dp_link *msm_dp_link,
++					enum drm_dp_phy dp_phy);
+ u32 msm_dp_link_get_test_bits_depth(struct msm_dp_link *msm_dp_link, u32 bpp);
+ int msm_dp_link_process_request(struct msm_dp_link *msm_dp_link);
+ int msm_dp_link_get_colorimetry_config(struct msm_dp_link *msm_dp_link);
++int msm_dp_link_get_lttpr_max_pe_level(struct msm_dp_link *msm_dp_link,
++				       enum drm_dp_phy dp_phy);
++int msm_dp_link_get_lttpr_max_vs_level(struct msm_dp_link *msm_dp_link,
++				       enum drm_dp_phy dp_phy);
+ int msm_dp_link_adjust_levels(struct msm_dp_link *msm_dp_link, u8 *link_status);
+ bool msm_dp_link_send_test_response(struct msm_dp_link *msm_dp_link);
+ int msm_dp_link_psm_config(struct msm_dp_link *msm_dp_link,
+-- 
+2.45.2
+
