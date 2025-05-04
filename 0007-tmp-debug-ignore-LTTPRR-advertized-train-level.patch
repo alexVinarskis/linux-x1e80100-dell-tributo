@@ -1,0 +1,73 @@
+From fab0d2a3a2c49c14587e8eb943bc05228a13b159 Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sun, 4 May 2025 14:21:41 +0200
+Subject: [PATCH 7/7] tmp: debug: ignore LTTPRR advertized train level
+
+---
+ drivers/gpu/drm/msm/dp/dp_ctrl.c |  7 +++++++
+ drivers/gpu/drm/msm/dp/dp_link.c | 17 +++++++++++++++++
+ 2 files changed, 24 insertions(+)
+
+diff --git a/drivers/gpu/drm/msm/dp/dp_ctrl.c b/drivers/gpu/drm/msm/dp/dp_ctrl.c
+index 51e79bd13edd..be433f560ee1 100644
+--- a/drivers/gpu/drm/msm/dp/dp_ctrl.c
++++ b/drivers/gpu/drm/msm/dp/dp_ctrl.c
+@@ -1047,6 +1047,13 @@ static int msm_dp_ctrl_update_phy_vx_px(struct msm_dp_ctrl_private *ctrl,
+ 	u32 voltage_swing_level = link->phy_params.v_level;
+ 	u32 pre_emphasis_level = link->phy_params.p_level;
+ 
++	pr_err("AA phy #%d: v_level=%d, p_level=%d\n",
++		dp_phy, link->phy_params.v_level,
++		link->phy_params.p_level);
++	pr_err("BB phy #%d: max_v_level=%d, max_p_level=%d\n",
++		dp_phy, link->phy_params.max_v_level,
++		link->phy_params.max_p_level);
++
+ 	drm_dbg_dp(ctrl->drm_dev,
+ 		"voltage level: %d emphasis level: %d\n",
+ 			voltage_swing_level, pre_emphasis_level);
+diff --git a/drivers/gpu/drm/msm/dp/dp_link.c b/drivers/gpu/drm/msm/dp/dp_link.c
+index d65a01a4cf3c..46986f9fe714 100644
+--- a/drivers/gpu/drm/msm/dp/dp_link.c
++++ b/drivers/gpu/drm/msm/dp/dp_link.c
+@@ -1188,6 +1188,10 @@ int msm_dp_link_adjust_levels(struct msm_dp_link *msm_dp_link, u8 *link_status)
+ 	drm_dbg_dp(link->drm_dev, "adjusted: v_level=%d, p_level=%d\n",
+ 		msm_dp_link->phy_params.v_level, msm_dp_link->phy_params.p_level);
+ 
++	pr_err("CC phy #XX: v_level=%d, p_level=%d\n",
++		msm_dp_link->phy_params.v_level,
++		msm_dp_link->phy_params.p_level);
++
+ 	return 0;
+ }
+ 
+@@ -1197,6 +1201,9 @@ void msm_dp_link_reset_phy_params_vx_px(struct msm_dp_link *msm_dp_link,
+ 	msm_dp_link->phy_params.v_level = 0;
+ 	msm_dp_link->phy_params.p_level = 0;
+ 
++	pr_err("00 phy #%d: params reset",
++		dp_phy);
++
+ 	/*
+ 	 * Get max supported voltage swing, pre-emphasis levels from the DPTX_PHY
+ 	 * (source or LTTPR) upstream from the DPRX_PHY we train.
+@@ -1210,6 +1217,16 @@ void msm_dp_link_reset_phy_params_vx_px(struct msm_dp_link *msm_dp_link,
+ 		msm_dp_link->phy_params.max_v_level =
+ 			msm_dp_link_get_lttpr_max_vs_level(msm_dp_link, dp_phy + 1);
+ 	}
++
++	pr_err("00 phy #%d: max_v_level=%d, max_p_level=%d\n",
++		dp_phy, msm_dp_link->phy_params.max_v_level,
++		msm_dp_link->phy_params.max_p_level);
++
++	// DEV BREAKING CHANGE - ignore advertised levels
++	pr_err("00 phy #%d: forcing max_v_level=3, max_p_level=3\n",
++		dp_phy);
++	msm_dp_link->phy_params.max_p_level = DP_TRAIN_LEVEL_MAX;
++	msm_dp_link->phy_params.max_v_level = DP_TRAIN_LEVEL_MAX;
+ }
+ 
+ u32 msm_dp_link_get_test_bits_depth(struct msm_dp_link *msm_dp_link, u32 bpp)
+-- 
+2.45.2
+
