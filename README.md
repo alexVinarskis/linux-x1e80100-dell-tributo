@@ -5,7 +5,7 @@ As changes will be merged upstream, redundant patches will be dropped from this 
 ## Test setup
 Kernel
 * `linux-next`
-* current patchset tested on `next-20250327`
+* current patchset tested on `next-20250517`
 
 Initramfs
 * Ubuntu's auto-built from kernel installation
@@ -51,7 +51,7 @@ HW configurations tested
 Besides device tree changes in kernel, two things are required to get audio working: alsa configuration and toplogy firmware.
 
 ### Audioreach-topology
-* Download latest sources with Dell XPS 9345 support from https://github.com/alexVinarskis/audioreach-topology/tree/dell-xps-9345
+* Download latest sources with Dell XPS 9345 support from https://github.com/linux-msm/audioreach-topology/
 * Build via
 ```bash
 cmake .
