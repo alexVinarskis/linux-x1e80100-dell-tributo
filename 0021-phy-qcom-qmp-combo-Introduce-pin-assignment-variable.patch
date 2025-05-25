@@ -1,0 +1,75 @@
+From af53cd9e1242425cbbfa87969cfe92602bce256c Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sun, 25 May 2025 10:18:11 +0200
+Subject: [PATCH 01/12] phy: qcom-qmp-combo: Introduce pin assignment variable
+
+QMP PHY combo driver is effectively a mux, since it can operate either
+in USB3+DP or 4 lane DP modes. Prepare for this capability by
+introducing optional pin_assignment variable. By initializing it to
+default (USB3+DP) mode this change has no functional impact.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ drivers/phy/qualcomm/phy-qcom-qmp-combo.c | 18 +++++++++++++++++-
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+index b09fa00e9fe7..1aa7196223aa 100644
+--- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
++++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+@@ -19,6 +19,8 @@
+ #include <linux/reset.h>
+ #include <linux/slab.h>
+ #include <linux/usb/typec.h>
++#include <linux/usb/typec_altmode.h>
++#include <linux/usb/typec_dp.h>
+ #include <linux/usb/typec_mux.h>
+ 
+ #include <drm/bridge/aux-bridge.h>
+@@ -1701,6 +1703,8 @@ struct qmp_combo {
+ 
+ 	struct typec_switch_dev *sw;
+ 	enum typec_orientation orientation;
++	unsigned long dp_com_phy_mode;
++	unsigned long pin_assignment;
+ };
+ 
+ static void qmp_v3_dp_aux_init(struct qmp_combo *qmp);
+@@ -2772,6 +2776,12 @@ static int qmp_combo_dp_calibrate(struct phy *phy)
+ 	return ret;
+ }
+ 
++static bool qmp_combo_typec_dp_only(int pin_assignment)
++{
++	return pin_assignment == TYPEC_DP_STATE_C ||
++	       pin_assignment == TYPEC_DP_STATE_E;
++}
++
+ static int qmp_combo_com_init(struct qmp_combo *qmp, bool force)
+ {
+ 	const struct qmp_phy_cfg *cfg = qmp->cfg;
+@@ -2816,7 +2826,12 @@ static int qmp_combo_com_init(struct qmp_combo *qmp, bool force)
+ 	if (qmp->orientation == TYPEC_ORIENTATION_REVERSE)
+ 		val |= SW_PORTSELECT_VAL;
+ 	writel(val, com + QPHY_V3_DP_COM_TYPEC_CTRL);
+-	writel(USB3_MODE | DP_MODE, com + QPHY_V3_DP_COM_PHY_MODE_CTRL);
++
++	/* Only enable USB if USB3+DP mode is requested */
++	qmp->dp_com_phy_mode = DP_MODE;
++	if (!qmp_combo_typec_dp_only(qmp->pin_assignment))
++		qmp->dp_com_phy_mode |= USB3_MODE;
++	writel(qmp->dp_com_phy_mode, com + QPHY_V3_DP_COM_PHY_MODE_CTRL);
+ 
+ 	/* bring both QMP USB and QMP DP PHYs PCS block out of reset */
+ 	qphy_clrbits(com, QPHY_V3_DP_COM_RESET_OVRD_CTRL,
+@@ -3772,6 +3787,7 @@ static int qmp_combo_probe(struct platform_device *pdev)
+ 	dev_set_drvdata(dev, qmp);
+ 
+ 	qmp->orientation = TYPEC_ORIENTATION_NORMAL;
++	qmp->pin_assignment = TYPEC_DP_STATE_D;
+ 
+ 	qmp->cfg = of_device_get_match_data(dev);
+ 	if (!qmp->cfg)
+-- 
+2.45.2
+

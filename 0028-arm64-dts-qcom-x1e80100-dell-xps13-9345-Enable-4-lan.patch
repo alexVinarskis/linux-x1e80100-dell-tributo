@@ -1,0 +1,39 @@
+From 77a3009603da39a969dfd66d981d98f2b688a51d Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sun, 25 May 2025 12:58:13 +0200
+Subject: [PATCH 08/12] arm64: dts: qcom: x1e80100-dell-xps13-9345: Enable 4
+ lane DP mode
+
+With 4 lane DP support added to QMP PHY, allow 4 lanes on both Type-C
+connectors.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts b/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
+index 67eae71d4a34..3096fc281a62 100644
+--- a/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
++++ b/arch/arm64/boot/dts/qcom/x1e80100-dell-xps13-9345.dts
+@@ -963,7 +963,7 @@ &mdss_dp0 {
+ };
+ 
+ &mdss_dp0_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ 	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
+ };
+ 
+@@ -972,7 +972,7 @@ &mdss_dp1 {
+ };
+ 
+ &mdss_dp1_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ 	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
+ };
+ 
+-- 
+2.45.2
+

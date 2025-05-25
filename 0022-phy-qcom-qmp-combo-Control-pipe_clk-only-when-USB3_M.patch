@@ -1,0 +1,60 @@
+From eb93cb78d65860e2efb59c0aa6ea797ab639c7e7 Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sun, 25 May 2025 17:47:22 +0200
+Subject: [PATCH 02/12] phy: qcom-qmp-combo: Control pipe_clk only when
+ USB3_MODE is used
+
+As `pipe_clk` is USB-related, attempt to prepare/unprepare when USB PHY
+is not being used would result in errors. To prepare for DP-only
+operation, condition `pipe_clk` and USB power on/power off to USB mode
+presense. Since USB3_MODE is the default state, this change has no
+functional impact.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ drivers/phy/qualcomm/phy-qcom-qmp-combo.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+index 1aa7196223aa..7c60be9c138d 100644
+--- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
++++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+@@ -3159,7 +3159,9 @@ static int __maybe_unused qmp_combo_runtime_suspend(struct device *dev)
+ 
+ 	qmp_combo_enable_autonomous_mode(qmp);
+ 
+-	clk_disable_unprepare(qmp->pipe_clk);
++	if (qmp->dp_com_phy_mode & USB3_MODE)
++		clk_disable_unprepare(qmp->pipe_clk);
++
+ 	clk_bulk_disable_unprepare(qmp->num_clks, qmp->clks);
+ 
+ 	return 0;
+@@ -3181,7 +3183,8 @@ static int __maybe_unused qmp_combo_runtime_resume(struct device *dev)
+ 	if (ret)
+ 		return ret;
+ 
+-	ret = clk_prepare_enable(qmp->pipe_clk);
++	if (qmp->dp_com_phy_mode & USB3_MODE)
++		ret = clk_prepare_enable(qmp->pipe_clk);
+ 	if (ret) {
+ 		dev_err(dev, "pipe_clk enable failed, err=%d\n", ret);
+ 		clk_bulk_disable_unprepare(qmp->num_clks, qmp->clks);
+@@ -3549,12 +3552,12 @@ static int qmp_combo_typec_switch_set(struct typec_switch_dev *sw,
+ 	qmp->orientation = orientation;
+ 
+ 	if (qmp->init_count) {
+-		if (qmp->usb_init_count)
++		if (qmp->usb_init_count && qmp->dp_com_phy_mode & USB3_MODE)
+ 			qmp_combo_usb_power_off(qmp->usb_phy);
+ 		qmp_combo_com_exit(qmp, true);
+ 
+ 		qmp_combo_com_init(qmp, true);
+-		if (qmp->usb_init_count)
++		if (qmp->usb_init_count && qmp->dp_com_phy_mode & USB3_MODE)
+ 			qmp_combo_usb_power_on(qmp->usb_phy);
+ 		if (qmp->dp_init_count)
+ 			cfg->dp_aux_init(qmp);
+-- 
+2.45.2
+

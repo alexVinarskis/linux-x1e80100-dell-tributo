@@ -1,0 +1,46 @@
+From b44655403cb4c16d5afb4ecaf8a17662fd519b24 Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sun, 25 May 2025 10:59:43 +0200
+Subject: [PATCH 04/12] arm64: dts: qcom: x1e80100: Add mode-switch to all
+ USB+DP QMP PHYs
+
+In order to support 4 lane DP mode, all three USB SS combo QMP PHYs
+need to receive Type-C pin assignment from retimer/mux to PHY. Add
+required property to each such PHY in devicetree node.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/x1e80100.dtsi | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/arch/arm64/boot/dts/qcom/x1e80100.dtsi b/arch/arm64/boot/dts/qcom/x1e80100.dtsi
+index a8eb4c5fe99f..dbf42e69c081 100644
+--- a/arch/arm64/boot/dts/qcom/x1e80100.dtsi
++++ b/arch/arm64/boot/dts/qcom/x1e80100.dtsi
+@@ -2856,6 +2856,7 @@ usb_1_ss0_qmpphy: phy@fd5000 {
+ 			#clock-cells = <1>;
+ 			#phy-cells = <1>;
+ 
++			mode-switch;
+ 			orientation-switch;
+ 
+ 			status = "disabled";
+@@ -2926,6 +2927,7 @@ usb_1_ss1_qmpphy: phy@fda000 {
+ 			#clock-cells = <1>;
+ 			#phy-cells = <1>;
+ 
++			mode-switch;
+ 			orientation-switch;
+ 
+ 			status = "disabled";
+@@ -2996,6 +2998,7 @@ usb_1_ss2_qmpphy: phy@fdf000 {
+ 			#clock-cells = <1>;
+ 			#phy-cells = <1>;
+ 
++			mode-switch;
+ 			orientation-switch;
+ 
+ 			status = "disabled";
+-- 
+2.45.2
+

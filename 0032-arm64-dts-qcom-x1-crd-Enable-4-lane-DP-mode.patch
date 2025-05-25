@@ -1,0 +1,47 @@
+From 49600aaef414263f4d2948c9b1de2b5fcd6f513b Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sun, 25 May 2025 13:44:03 +0200
+Subject: [PATCH 12/12] arm64: dts: qcom: x1-crd: Enable 4 lane DP mode
+
+With 4 lane DP support added to QMP PHY, allow 4 lanes on all three
+Type-C connectors.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/x1-crd.dtsi | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/x1-crd.dtsi b/arch/arm64/boot/dts/qcom/x1-crd.dtsi
+index c9f0d5052670..1584d1536bb7 100644
+--- a/arch/arm64/boot/dts/qcom/x1-crd.dtsi
++++ b/arch/arm64/boot/dts/qcom/x1-crd.dtsi
+@@ -1128,7 +1128,7 @@ &mdss_dp0 {
+ };
+ 
+ &mdss_dp0_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ };
+ 
+ &mdss_dp1 {
+@@ -1136,7 +1136,7 @@ &mdss_dp1 {
+ };
+ 
+ &mdss_dp1_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ };
+ 
+ &mdss_dp2 {
+@@ -1144,7 +1144,7 @@ &mdss_dp2 {
+ };
+ 
+ &mdss_dp2_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ };
+ 
+ &mdss_dp3 {
+-- 
+2.45.2
+

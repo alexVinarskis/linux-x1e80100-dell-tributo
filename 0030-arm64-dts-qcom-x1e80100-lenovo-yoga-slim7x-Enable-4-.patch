@@ -1,0 +1,48 @@
+From ead11b65977bc0d8964eda5708d545ebe4dd98c7 Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sun, 25 May 2025 13:48:01 +0200
+Subject: [PATCH 10/12] arm64: dts: qcom: x1e80100-lenovo-yoga-slim7x: Enable 4
+ lane DP mode
+
+With 4 lane DP support added to QMP PHY, allow 4 lanes on all three
+Type-C connectors.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/x1e80100-lenovo-yoga-slim7x.dts | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/x1e80100-lenovo-yoga-slim7x.dts b/arch/arm64/boot/dts/qcom/x1e80100-lenovo-yoga-slim7x.dts
+index dad0f11e8e85..c5ab248e83d0 100644
+--- a/arch/arm64/boot/dts/qcom/x1e80100-lenovo-yoga-slim7x.dts
++++ b/arch/arm64/boot/dts/qcom/x1e80100-lenovo-yoga-slim7x.dts
+@@ -959,7 +959,7 @@ &mdss_dp0 {
+ };
+ 
+ &mdss_dp0_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ 	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
+ };
+ 
+@@ -968,7 +968,7 @@ &mdss_dp1 {
+ };
+ 
+ &mdss_dp1_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ 	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
+ };
+ 
+@@ -977,7 +977,7 @@ &mdss_dp2 {
+ };
+ 
+ &mdss_dp2_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ 	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
+ };
+ 
+-- 
+2.45.2
+

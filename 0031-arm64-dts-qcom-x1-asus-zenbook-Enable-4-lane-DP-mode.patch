@@ -1,0 +1,39 @@
+From 01fcee8b617c7ca6a6f63c7edcc953e6e66968a5 Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sun, 25 May 2025 12:58:33 +0200
+Subject: [PATCH 11/12] arm64: dts: qcom: x1-asus-zenbook: Enable 4 lane DP
+ mode
+
+With 4 lane DP support added to QMP PHY, allow 4 lanes on both Type-C
+connectors.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi b/arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
+index 9db186cf8ca2..73f472088b1a 100644
+--- a/arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
++++ b/arch/arm64/boot/dts/qcom/x1-asus-zenbook-a14.dtsi
+@@ -1010,7 +1010,7 @@ &mdss_dp0 {
+ };
+ 
+ &mdss_dp0_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ 	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
+ };
+ 
+@@ -1019,7 +1019,7 @@ &mdss_dp1 {
+ };
+ 
+ &mdss_dp1_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ 	link-frequencies = /bits/ 64 <1620000000 2700000000 5400000000 8100000000>;
+ };
+ 
+-- 
+2.45.2
+

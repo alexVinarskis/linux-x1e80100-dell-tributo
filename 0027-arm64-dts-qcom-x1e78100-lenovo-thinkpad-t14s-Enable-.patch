@@ -1,0 +1,39 @@
+From 45a6a4f7eb4745a0f5fccf44571f13d70722326a Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sun, 25 May 2025 13:48:35 +0200
+Subject: [PATCH 07/12] arm64: dts: qcom: x1e78100-lenovo-thinkpad-t14s: Enable
+ 4 lane DP mode
+
+With 4 lane DP support added to QMP PHY, allow 4 lanes on both Type-C
+connectors.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ arch/arm64/boot/dts/qcom/x1e78100-lenovo-thinkpad-t14s.dtsi | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/arch/arm64/boot/dts/qcom/x1e78100-lenovo-thinkpad-t14s.dtsi b/arch/arm64/boot/dts/qcom/x1e78100-lenovo-thinkpad-t14s.dtsi
+index ac1dddf27da3..e79b5067bbac 100644
+--- a/arch/arm64/boot/dts/qcom/x1e78100-lenovo-thinkpad-t14s.dtsi
++++ b/arch/arm64/boot/dts/qcom/x1e78100-lenovo-thinkpad-t14s.dtsi
+@@ -994,7 +994,7 @@ &mdss_dp0 {
+ };
+ 
+ &mdss_dp0_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ };
+ 
+ &mdss_dp1 {
+@@ -1002,7 +1002,7 @@ &mdss_dp1 {
+ };
+ 
+ &mdss_dp1_out {
+-	data-lanes = <0 1>;
++	data-lanes = <0 1 2 3>;
+ };
+ 
+ &mdss_dp3 {
+-- 
+2.45.2
+

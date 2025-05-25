@@ -1,0 +1,130 @@
+From 266e09523872eb33d240a722bd004fdca1bea16b Mon Sep 17 00:00:00 2001
+From: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+Date: Sun, 25 May 2025 17:56:39 +0200
+Subject: [PATCH 03/12] phy: qcom-qmp-combo: Support type-c pin assignment
+
+In order to support 4 lane DP mode on top of 2 lane DP + 2 lane USB3,
+PHY shall be aware of Type-C pin assignment (if any). Register driver
+as Type-C mux to receive mode selection updates. Utilize newly
+introduced variable to switch modes accordingly.
+
+Signed-off-by: Aleksandrs Vinarskis <alex.vinarskis@gmail.com>
+---
+ drivers/phy/qualcomm/phy-qcom-qmp-combo.c | 65 ++++++++++++++++++++++-
+ 1 file changed, 63 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+index 7c60be9c138d..0e137d4f2f7c 100644
+--- a/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
++++ b/drivers/phy/qualcomm/phy-qcom-qmp-combo.c
+@@ -1701,6 +1701,7 @@ struct qmp_combo {
+ 	struct clk_hw dp_link_hw;
+ 	struct clk_hw dp_pixel_hw;
+ 
++	struct typec_mux_dev *mux;
+ 	struct typec_switch_dev *sw;
+ 	enum typec_orientation orientation;
+ 	unsigned long dp_com_phy_mode;
+@@ -3539,6 +3540,34 @@ static int qmp_combo_register_clocks(struct qmp_combo *qmp, struct device_node *
+ }
+ 
+ #if IS_ENABLED(CONFIG_TYPEC)
++static int qmp_combo_typec_mux_set(struct typec_mux_dev *mux,
++				   struct typec_mux_state *state)
++{
++	struct qmp_combo *qmp = typec_mux_get_drvdata(mux);
++	const struct qmp_phy_cfg *cfg = qmp->cfg;
++
++	if (state->mode == qmp->pin_assignment || state->mode == TYPEC_STATE_SAFE)
++		return 0;
++
++	mutex_lock(&qmp->phy_mutex);
++	qmp->pin_assignment = state->mode;
++
++	if (qmp->init_count) {
++		if (qmp->usb_init_count && qmp->dp_com_phy_mode & USB3_MODE)
++			qmp_combo_usb_power_off(qmp->usb_phy);
++		qmp_combo_com_exit(qmp, true);
++
++		qmp_combo_com_init(qmp, true);
++		if (qmp->usb_init_count && qmp->dp_com_phy_mode & USB3_MODE)
++			qmp_combo_usb_power_on(qmp->usb_phy);
++		if (qmp->dp_init_count)
++			cfg->dp_aux_init(qmp);
++	}
++	mutex_unlock(&qmp->phy_mutex);
++
++	return 0;
++}
++
+ static int qmp_combo_typec_switch_set(struct typec_switch_dev *sw,
+ 				      enum typec_orientation orientation)
+ {
+@@ -3567,13 +3596,37 @@ static int qmp_combo_typec_switch_set(struct typec_switch_dev *sw,
+ 	return 0;
+ }
+ 
+-static void qmp_combo_typec_unregister(void *data)
++static void qmp_combo_typec_mux_unregister(void *data)
++{
++	struct qmp_combo *qmp = data;
++
++	typec_mux_unregister(qmp->mux);
++}
++
++static void qmp_combo_typec_switch_unregister(void *data)
+ {
+ 	struct qmp_combo *qmp = data;
+ 
+ 	typec_switch_unregister(qmp->sw);
+ }
+ 
++static int qmp_combo_typec_mux_register(struct qmp_combo *qmp)
++{
++	struct typec_mux_desc mux_desc = {};
++	struct device *dev = qmp->dev;
++
++	mux_desc.drvdata = qmp;
++	mux_desc.fwnode = dev->fwnode;
++	mux_desc.set = qmp_combo_typec_mux_set;
++	qmp->mux = typec_mux_register(dev, &mux_desc);
++	if (IS_ERR(qmp->mux)) {
++		dev_err(dev, "Unable to register typec mux: %pe\n", qmp->mux);
++		return PTR_ERR(qmp->mux);
++	}
++
++	return devm_add_action_or_reset(dev, qmp_combo_typec_mux_unregister, qmp);
++}
++
+ static int qmp_combo_typec_switch_register(struct qmp_combo *qmp)
+ {
+ 	struct typec_switch_desc sw_desc = {};
+@@ -3588,9 +3641,13 @@ static int qmp_combo_typec_switch_register(struct qmp_combo *qmp)
+ 		return PTR_ERR(qmp->sw);
+ 	}
+ 
+-	return devm_add_action_or_reset(dev, qmp_combo_typec_unregister, qmp);
++	return devm_add_action_or_reset(dev, qmp_combo_typec_switch_unregister, qmp);
+ }
+ #else
++static int qmp_combo_typec_mux_register(struct qmp_combo *qmp)
++{
++	return 0;
++}
+ static int qmp_combo_typec_switch_register(struct qmp_combo *qmp)
+ {
+ 	return 0;
+@@ -3825,6 +3882,10 @@ static int qmp_combo_probe(struct platform_device *pdev)
+ 	if (ret)
+ 		goto err_node_put;
+ 
++	ret = qmp_combo_typec_mux_register(qmp);
++	if (ret)
++		goto err_node_put;
++
+ 	ret = qmp_combo_typec_switch_register(qmp);
+ 	if (ret)
+ 		goto err_node_put;
+-- 
+2.45.2
+
