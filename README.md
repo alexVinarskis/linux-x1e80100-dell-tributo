@@ -44,7 +44,7 @@ HW configurations tested
 | USB-C DP Alt Mode       |     ✅ |                                                                                                              |
 | USB-C DP over dock      |     ✅ | Series on the lists, not yet merged                                                                          |
 | Wi-Fi                   |     ✅ |                                                                                                              |
-| EC                      |  QC/❌ | Proprietary controller
+| EC                      |    WIP | Driver patch series pending. Reverse engineering findings are [available](dell-xps13-9345-ec.pdf)            |
 
 ## Audio configuration  
 
